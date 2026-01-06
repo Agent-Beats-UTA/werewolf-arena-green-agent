@@ -1,5 +1,5 @@
 from a2a.types import AgentCard, AgentCapabilities
-from lib.skills import hello_world_skill, extended_skill
+from greenAgent.src.a2a.skills import hello_world_skill, extended_skill
 
 green_agent_card = AgentCard(
     id='green_agent',
