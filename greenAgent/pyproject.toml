@@ -5,6 +5,8 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "a2a-sdk[http,http-server]>=0.3.22",
+    "a2a-sdk[all,http,http-server]>=0.3.22",
+    "agentbeats>=1.2.6",
+    "uuid>=1.30",
     "uvicorn>=0.38.0",
 ]

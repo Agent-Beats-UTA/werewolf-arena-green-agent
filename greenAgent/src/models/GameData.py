@@ -1,17 +1,20 @@
 from pydantic import BaseModel
 from typing import Dict, List, Optional
-from greenAgent.models.enum.EliminationType import EliminationType
-from greenAgent.models.enum.Status import Status
-from greenAgent.models.Participant import Participant
-from greenAgent.models.Message import Message
-from greenAgent.models.Vote import Vote
-from greenAgent.models.Elimination import Elimination
+from src.models.enum.EliminationType import EliminationType
+from src.models.enum.Status import Status
+from src.models.Participant import Participant
+from src.models.Message import Message
+from src.models.Vote import Vote
+from src.models.Elimination import Elimination
 
 class GameData(BaseModel):
     current_round: int
     winner: Optional[str]  # "werewolves", "villagers", or None
     turns_to_speak_per_round: int
-    participants: Dict[str, Participant]
+    participants: Dict[int, List[Participant]]
+    werewolves: List[Participant]
+    seer: Participant
+    villagers:List[Participant]
     speaking_order: Dict[int, List[str]]
     chat_history: Dict[int, List[Message]]
     bids: Dict[int, List[str]]
