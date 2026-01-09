@@ -35,8 +35,8 @@ class Night(Phase):
         # Reason: <<vote reason>>
 
         player, rationale = response
-        #TODO: Implement eliminate player method
-        self.game.eliminate_player(player, rationale)
+        
+        self.game.state.eliminate_player(player, rationale)
         werewolf_elimintion_event = Event(
             type=EventType.WEREWOLF_ELIMINATION,
             eliminated_player=player,

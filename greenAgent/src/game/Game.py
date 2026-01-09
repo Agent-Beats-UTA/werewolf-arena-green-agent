@@ -43,10 +43,12 @@ class Game(BaseModel):
         
         for p in participants:
             self.state.add_participant(p, "")
-            
+       
+    #Logs     
     def log_event(self, round:int, event:Event):
          self.state.events.setdefault(round, []).append(event)
          
+    # Prompts
     def get_night_elimination_message(self, round_num:int):
         round_events = self.state.events[round_num]
         eliminated_player = [e.eliminated_player for e in round_events if e.type == EventType.WEREWOLF_ELIMINATION]
@@ -60,7 +62,7 @@ class Game(BaseModel):
         return f"You all voted to eliminate player {eliminated_player}. They are not the werewolf."
         
         
-        
+    # Execute Phases
     def run_night_phase(self):
         self.night_controller.run()
 
