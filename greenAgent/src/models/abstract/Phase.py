@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from abc import ABC, abstractmethod
-from src.models.Game import Game
+from greenAgent.src.game.Game import Game
 from src.a2a.messenger import Messenger
 
 class Phase(ABC):
@@ -11,8 +11,4 @@ class Phase(ABC):
     
     @abstractmethod
     def run(self):
-        pass
-    
-    @abstractmethod
-    def get_prompt(self):
         pass

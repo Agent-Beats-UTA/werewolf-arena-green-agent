@@ -1,5 +1,5 @@
 from src.models.abstract.Phase import Phase
-from src.models.Game import Game
+from greenAgent.src.game.Game import Game
 
 class Bidding(Phase):
     def __init__(self, game:Game):
@@ -7,8 +7,3 @@ class Bidding(Phase):
         
     def run(self):
         pass
-    
-    def get_prompt(self):
-        pass
-    
-    

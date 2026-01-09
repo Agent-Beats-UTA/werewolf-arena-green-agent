@@ -1,9 +1,11 @@
-import logging
-
 from typing import List, Tuple
+
 from src.models.abstract.Phase import Phase
-from src.models.Game import Game
+from greenAgent.src.game.Game import Game
 from src.a2a.messenger import Messenger
+from src.models.Event import Event
+
+from src.models.enum.EventType import EventType
 
 class Night(Phase):
     def __init__(self, game:Game, messenger:Messenger):
@@ -12,6 +14,8 @@ class Night(Phase):
     def run(self):
         self.execute_werewolf_kill()
         self.execute_seer_investigation()
+        
+        self.game.log_event(self.game.state.current_round, Event(type=EventType.NIGHT_END))
 
     def execute_werewolf_kill(self):
         game_state = self.game.state
@@ -31,16 +35,21 @@ class Night(Phase):
         # Reason: <<vote reason>>
 
         player, rationale = response
-        self.game.eliminate_player(reason)
-
-        logger.log(f"Werewolf eliminated player: {player} for this reason. {rationale}")
+        
+        self.game.state.eliminate_player(player, rationale)
+        werewolf_elimintion_event = Event(
+            type=EventType.WEREWOLF_ELIMINATION,
+            eliminated_player=player,
+            description=rationale
+        )
+        self.game.log_event(werewolf_elimintion_event)
         game_state.latest_werewolf_kill = player
 
     def execute_seer_investigation(self):
         game_state = self.game.state
 
         response = self.messenger.talk_to_agent(
-            message=get_seer_prompt(
+            message=self.get_seer_prompt(
             round_num=game_state.current_round,
             participants=list(game_state.participants.keys()),
             previous_checks=game_state.seer_checks
@@ -51,7 +60,13 @@ class Night(Phase):
         #TODO: Need to figure out how to properly parse specific info from agent response
 
         player, rationale = response
-        logger.log(f"Seer chose to investigate player: {player} for this reason: {rationale}")
+        seer_investigation_event = Event(
+            type=EventType.SEER_INVESTIGATION,
+            player=self.game.state.seer.id,
+            description=rationale
+        )
+        
+        self.game.log_event(seer_investigation_event)
 
         response = self.messenger.talk_to_agent(
             message=self.get_seer_reveal_prompt(
@@ -60,16 +75,11 @@ class Night(Phase):
             )
         )
 
-        logger.log(f"Seer investigation concluded")
-
     # Helpers    
     def is_werewolf(self, player_id:str):
-        return game_state.werewolf.id == player_id
+        return self.game.state.werewolf.id == player_id
     
     # Prompts
-    def get_prompt(self):
-        return ""
-    
     def get_seer_prompt(self, round_num:int, participants:List[str], previous_checks:List[Tuple[str, bool]]):
         previous_checked_names = [name for name, _ in previous_checks]
         remaining_participants = "\n".join([f"- {p}" for p in participants if p not in previous_checked_names])
