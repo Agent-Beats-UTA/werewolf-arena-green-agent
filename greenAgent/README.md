@@ -137,7 +137,7 @@ pytest tests/ -v
 pytest tests/test_night.py
 pytest tests/test_voting.py
 pytest tests/test_bidding.py
-pytest tests/test_discussion.py
+pytest tests/test_debate.py
 pytest tests/test_round_end.py
 pytest tests/test_game_end.py
 
@@ -157,18 +157,28 @@ pytest tests/ -k "test_night"
   - Mock messenger, game state, and participant fixtures
   - Sample response fixtures for different phases
 
-- **tests/test_night.py**: Night phase tests (fully implemented)
+- **tests/test_night.py**: Night phase tests
   - Werewolf elimination logic
   - Seer investigation logic
   - JSON parsing and prompt validation
 
-- **tests/test_voting.py**: Voting phase tests (fully implemented)
+- **tests/test_voting.py**: Voting phase tests
   - Vote collection and tallying
   - Elimination logic
   - Event logging
 
-- **tests/test_bidding.py**: Bidding phase tests (placeholder)
-- **tests/test_discussion.py**: Discussion phase tests (placeholder)
+- **tests/test_bidding.py**: Bidding phase tests
+  - Bid collection from all players
+  - Speaking order determination
+  - Zero and maximum bid handling
+  - JSON parsing and prompt validation
+
+- **tests/test_debate.py**: Debate phase tests
+  - Speaking order enforcement
+  - Turn limit compliance
+  - Chat history accumulation
+  - Night elimination information display
+
 - **tests/test_round_end.py**: Round end phase tests (placeholder)
 - **tests/test_game_end.py**: Game end phase tests (placeholder)
 
