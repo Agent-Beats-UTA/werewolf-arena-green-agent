@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import AsyncMock, Mock
-from uuid import uuid4
 
 from src.models.Participant import Participant
 from src.models.enum.Role import Role
@@ -8,6 +7,7 @@ from src.models.enum.Status import Status
 from src.models.Message import Message
 from src.models.Event import Event
 from src.models.Vote import Vote
+from src.models.Bid import Bid
 from src.game.Game import Game
 from src.game.GameData import GameData
 from src.a2a.messenger import Messenger
@@ -119,6 +119,12 @@ def vote_response():
 def bid_response():
     """Sample JSON response for bidding."""
     return '{"bid_amount": 50, "reason": "I have important information to share."}'
+
+
+@pytest.fixture
+def debate_message_response():
+    """Sample JSON response for debate message."""
+    return '{"message": "I think we should carefully consider all the evidence before voting."}'
 
 
 @pytest.fixture
