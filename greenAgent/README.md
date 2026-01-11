@@ -47,6 +47,66 @@ The game executes in the following sequential phases each round:
 - **Elimination** (`src/models/Elimination.py`): Elimination tracking
 - **Enums** (`src/models/enum/`): Phase, Role, Status, EventType definitions
 
+## Setup
+
+### Installing uv
+
+uv is a fast Python package installer and resolver. Install it using one of the following methods:
+
+```bash
+# macOS and Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# With pip
+pip install uv
+
+# With Homebrew (macOS)
+brew install uv
+```
+
+### Installing Dependencies
+
+Once uv is installed, use it to sync all project dependencies including dev/test dependencies:
+
+```bash
+# Navigate to the greenAgent directory
+cd greenAgent
+
+# Sync all dependencies (runtime + dev/test)
+uv sync --dev
+```
+
+This will:
+- Create a virtual environment if one doesn't exist
+- Install all dependencies specified in `pyproject.toml`
+- Install dev dependencies (pytest, pytest-asyncio, pytest-cov)
+- Use the exact versions locked in `uv.lock` for reproducible builds
+
+### Activating the Virtual Environment
+
+**IMPORTANT:** Before running the server or tests, make sure your virtual environment is active.
+
+```bash
+# macOS and Linux
+source .venv/bin/activate
+
+# Windows (Command Prompt)
+.venv\Scripts\activate.bat
+
+# Windows (PowerShell)
+.venv\Scripts\Activate.ps1
+```
+
+You'll know the virtual environment is active when you see `(.venv)` at the beginning of your terminal prompt.
+
+To deactivate the virtual environment:
+```bash
+deactivate
+```
+
 ## Running the Server
 
 ```bash
@@ -63,13 +123,6 @@ The server will start on `http://0.0.0.0:9999` and expose the A2A agent card.
 ## Testing
 
 The Green Agent includes comprehensive tests for all game phases.
-
-### Installing Test Dependencies
-
-```bash
-# Install pytest and related testing tools
-pip install pytest pytest-asyncio pytest-cov
-```
 
 ### Running Tests
 
