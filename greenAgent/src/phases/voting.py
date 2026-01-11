@@ -82,6 +82,7 @@ class Voting(Phase):
         #Eliminate player
         game_state.eliminate_player(player_tup[0])
             
+    # Prompts
     def get_vote_prompt(self, user_role:str, messages:List[Message], participants:List[Participant]):
         messages_w_ids = [f"{message.sender_id} - {message.content}" for message in messages]
         participant_ids = [p.id for p in participants]
@@ -104,5 +105,3 @@ class Voting(Phase):
                 "reason": "your explanation for why you are eliminating this player"
             }}
         """
-        
-    
