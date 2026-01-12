@@ -98,5 +98,11 @@ class GameData(BaseModel):
         current_participants = self.participants.get(self.current_round, [])
         self.participants[next_round] = current_participants.copy()
 
-        # Note: Other round-specific initializations can be added here
-        # For example: reset speaking order, prepare new chat history, etc.
+        # Initialize empty data structures for the new round
+        # These will be populated during the respective phases
+        self.chat_history[next_round] = []
+        self.bids[next_round] = []
+        self.votes[next_round] = []
+        self.events[next_round] = []
+        # speaking_order will be set during bidding phase
+        # eliminations will be added as players are eliminated
