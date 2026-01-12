@@ -9,29 +9,26 @@ from src.models.enum.Role import Role
 class TestRoundEndPhase:
     """Test suite for the Round End phase."""
 
-    @pytest.mark.asyncio
-    async def test_round_end_phase_initialization(self, mock_game):
+    def test_round_end_phase_initialization(self, mock_game):
         """Test that round end phase initializes correctly."""
-        round_end = RoundEnd(mock_game)
+        round_end = RoundEnd(mock_game, mock_game.messenger)
 
         assert round_end.game == mock_game
 
-    @pytest.mark.asyncio
-    async def test_round_end_phase_run(self, mock_game):
+    def test_round_end_phase_run(self, mock_game):
         """Test that round end phase run method executes without errors."""
-        round_end = RoundEnd(mock_game)
+        round_end = RoundEnd(mock_game, mock_game.messenger)
 
         # Execute - currently just passes, but should not raise errors
-        await round_end.run()
+        round_end.run()
 
-    @pytest.mark.asyncio
-    async def test_round_end_checks_win_conditions(self, mock_game):
+    def test_round_end_checks_win_conditions(self, mock_game):
         """
         Test that round end phase checks win conditions.
         NOTE: This test is a placeholder for when round end logic is implemented.
         """
         # Setup
-        round_end = RoundEnd(mock_game)
+        round_end = RoundEnd(mock_game, mock_game.messenger)
 
         # Expected behavior when implemented:
         # - Should check if werewolf is eliminated (villagers win)

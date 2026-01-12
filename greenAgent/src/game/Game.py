@@ -22,6 +22,7 @@ class Game(BaseModel):
     bidding_controller: Optional[Bidding] = None
     debate_controller: Optional[Debate] = None
     voting_controller: Optional[Voting] = None
+    round_end_controller: Optional[RoundEnd] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -41,6 +42,7 @@ class Game(BaseModel):
         self.voting_controller = Voting(self, messenger)
         self.bidding_controller = Bidding(self, messenger)
         self.debate_controller = Debate(self, messenger)
+        self.round_end_controller = RoundEnd(self, messenger)
 
         for p in participants:
             self.state.add_participant(p, "")
@@ -77,7 +79,7 @@ class Game(BaseModel):
         self.voting_controller.run()
 
     def run_round_end_phase(self):
-        pass
+        self.round_end_controller.run()
         
     def run_game_end_phase(self):
         pass
