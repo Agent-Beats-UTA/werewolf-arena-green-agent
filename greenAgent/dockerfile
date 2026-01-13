@@ -1,29 +1,23 @@
-# Use Python 3.13 slim image
-FROM python:3.13-slim
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm
 
-# Install uv for dependency management
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+RUN adduser agent
+USER agent
+WORKDIR /home/agent
 
-# Set working directory
-WORKDIR /app
+RUN mkdir -p /home/agent/greenAgent
+COPY pyproject.toml uv.lock README.md __main__.py greenAgent/
+COPY src greenAgent/src
 
-# Copy dependency files (assuming build context is the project root)
-COPY pyproject.toml uv.lock* ./
+WORKDIR /home/agent/greenAgent
 
-# Sync dependencies without installing the project
-RUN uv sync --frozen --no-install-project --no-dev
+RUN \
+    --mount=type=cache,target=/home/agent/.cache/uv,uid=1000 \
+    uv sync --locked
 
-# Copy the entire project
-COPY . .
+# Ensure the parent path is on PYTHONPATH so `import greenAgent.src...` works
+ENV PYTHONPATH=/home/agent
 
-# Sync the project itself
-RUN uv sync --frozen --no-dev
-
-# Set PYTHONPATH to include /app so greenAgent can be imported
-ENV PYTHONPATH=/app
-
-# Expose the port used by uvicorn (from __main__.py)
+# Run the project's __main__.py (which starts uvicorn on port 9999)
+ENTRYPOINT ["uv", "run", "__main__.py"]
+CMD ["--host", "0.0.0.0", "--port", "9999"]
 EXPOSE 9999
-
-# Run the agent
-CMD ["uv", "run","__main__.py"]
