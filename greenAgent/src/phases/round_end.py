@@ -28,7 +28,6 @@ class RoundEnd(Phase):
             return
         
         werewolf_alive = self.is_werewolf_alive(current_participants)
-        werewolf_count = self.count_werewolves(current_participants)
         villager_count = self.count_villagers(current_participants)
         
         #villagers win
@@ -37,7 +36,7 @@ class RoundEnd(Phase):
             self.game.current_phase = PhaseEnum.GAME_END
 
         #werewolves win
-        elif werewolf_count >= villager_count:
+        elif werewolf_alive and villager_count <= 1:
             game_state.declare_winner("werewolves")
             self.game.current_phase = PhaseEnum.GAME_END
         else:
@@ -51,10 +50,6 @@ class RoundEnd(Phase):
             return False
         werewolf_id = self.game.state.werewolf.id
         return any(p.id == werewolf_id for p in participants)
-    
-    #Check for number of werewolves
-    def count_werewolves(self, participants):
-        return sum(1 for p in participants if p.role == Role.WEREWOLF)
     
     #Check for number of villagers and seers
     def count_villagers(self, participants):
