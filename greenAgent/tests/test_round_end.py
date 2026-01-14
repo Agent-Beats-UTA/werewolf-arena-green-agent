@@ -4,145 +4,306 @@ from unittest.mock import Mock
 from src.phases.round_end import RoundEnd
 from src.models.enum.Phase import Phase
 from src.models.enum.Role import Role
+from src.models.enum.EventType import EventType
 
 
 class TestRoundEndPhase:
-    """Test suite for the Round End phase."""
+   
 
-    def test_round_end_phase_initialization(self, mock_game, mock_messenger):
-        """Test that round end phase initializes correctly."""
-        round_end = RoundEnd(mock_game, mock_messenger)
+    def test_round_end_phase_initialization(self, mock_game):
+        """Test round end phase initializes correctly"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
 
         assert round_end.game == mock_game
-        assert round_end.messenger == mock_messenger
+        assert round_end.messenger == mock_game.messenger
 
-    @pytest.mark.asyncio
-    async def test_round_end_phase_run(self, mock_game, mock_messenger, sample_participants):
-        """Test that round end phase run method executes without errors."""
-        round_end = RoundEnd(mock_game, mock_messenger)
+    def test_round_end_phase_run(self, mock_game):
+        """Test that round end phase run method executes without error"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
 
-        mock_game.state.participants = {1: list(sample_participants.values())}
+        round_end.run()
+
+        mock_game.log_event.assert_called_once()
+        call_args = mock_game.log_event.call_args
+        assert call_args[0][0] == mock_game.state.current_round
+        assert call_args[0][1].type == EventType.ROUND_END
+
+    def test_round_end_checks_win_conditions(self, mock_game):
+        """Test that round end phase checks win conditions."""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        mock_game.state.current_round = 1
+        mock_game.state.participants = {1: []}
+        mock_game.current_phase = Phase.NIGHT
+
+        round_end.run()
+
+        assert mock_game.log_event.called
+
+    def test_round_end_villagers_win_condition(self, mock_game, sample_participants):
+        """Test that round end detects villagers win when werewolf is eliminated"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        mock_game.state.current_round = 1
         mock_game.state.werewolf = sample_participants["werewolf"]
+        mock_game.state.participants = {
+            1: [
+                sample_participants["seer"],
+                sample_participants["villager1"],
+                sample_participants["villager2"],
+                sample_participants["villager3"]
+            ]
+        }
+        mock_game.state.declare_winner = Mock()
+        mock_game.current_phase = Phase.NIGHT
+
+        round_end.run()
+
+        mock_game.state.declare_winner.assert_called_once_with("villagers")
+        assert mock_game.current_phase == Phase.GAME_END
+
+    def test_round_end_werewolf_win_condition(self, mock_game, sample_participants):
+        """Test that round end detects werewolf win when villagers <= 1."""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        mock_game.state.current_round = 1
+        mock_game.state.werewolf = sample_participants["werewolf"]
+        mock_game.state.participants = {
+            1: [
+                sample_participants["werewolf"],
+                sample_participants["seer"]
+            ]
+        }
+        mock_game.state.declare_winner = Mock()
+        mock_game.current_phase = Phase.NIGHT
+
+        round_end.run()
+
+        mock_game.state.declare_winner.assert_called_once_with("werewolf")
+        assert mock_game.current_phase == Phase.GAME_END
+
+    def test_round_end_werewolf_win_with_only_werewolf(self, mock_game, sample_participants):
+        """Test that round end detects werewolf win when only werewolf remains"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        mock_game.state.current_round = 1
+        mock_game.state.werewolf = sample_participants["werewolf"]
+        mock_game.state.participants = {
+            1: [sample_participants["werewolf"]]
+        }
+        mock_game.state.declare_winner = Mock()
+        mock_game.current_phase = Phase.NIGHT
+
+        round_end.run()
+
+        mock_game.state.declare_winner.assert_called_once_with("werewolf")
+        assert mock_game.current_phase == Phase.GAME_END
+
+    def test_round_end_continues_game(self, mock_game, sample_participants):
+        """Test that round end continues to next round if no win condition is met"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        mock_game.state.current_round = 1
+        mock_game.state.werewolf = sample_participants["werewolf"]
+        mock_game.state.participants = {
+            1: [
+                sample_participants["werewolf"],
+                sample_participants["seer"],
+                sample_participants["villager1"],
+                sample_participants["villager2"]
+            ]
+        }
         mock_game.state.declare_winner = Mock()
         mock_game.state.initialize_next_round = Mock()
+        mock_game.current_phase = Phase.NIGHT
 
-        # Execute - should not raise errors
-        await round_end.run()
+        round_end.run()
 
-    @pytest.mark.asyncio
-    async def test_round_end_villagers_win_when_werewolf_eliminated(self, mock_game, mock_messenger, sample_participants):
-        """Test that villagers win when werewolf is eliminated."""
-        round_end = RoundEnd(mock_game, mock_messenger)
+        mock_game.state.declare_winner.assert_not_called()
+        assert mock_game.state.current_round == 2
+        mock_game.state.initialize_next_round.assert_called_once()
+        assert mock_game.current_phase == Phase.NIGHT
 
-        # Setup: werewolf is NOT in participants (eliminated)
-        villagers_only = [
+    def test_round_end_increments_round_number(self, mock_game, sample_participants):
+        """Test that round end increments the round number when game continues"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        initial_round = 1
+        mock_game.state.current_round = initial_round
+        mock_game.state.werewolf = sample_participants["werewolf"]
+        mock_game.state.participants = {
+            1: [
+                sample_participants["werewolf"],
+                sample_participants["seer"],
+                sample_participants["villager1"],
+                sample_participants["villager2"]
+            ]
+        }
+        mock_game.state.initialize_next_round = Mock()
+        mock_game.current_phase = Phase.NIGHT
+
+        round_end.run()
+
+        assert mock_game.state.current_round == initial_round + 1
+
+    def test_round_end_logs_events(self, mock_game, sample_participants):
+        """Test that round end phase logs all required events."""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        mock_game.state.current_round = 1
+        mock_game.state.werewolf = sample_participants["werewolf"]
+        mock_game.state.participants = {
+            1: [
+                sample_participants["werewolf"],
+                sample_participants["seer"],
+                sample_participants["villager1"]
+            ]
+        }
+        mock_game.log_event.reset_mock()
+
+        round_end.run()
+
+        assert mock_game.log_event.called
+        call_args = mock_game.log_event.call_args
+        assert call_args[0][0] == 1
+        assert call_args[0][1].type == EventType.ROUND_END
+
+    def test_round_end_with_no_active_players(self, mock_game):
+        """Test that round end handles edge case of no active players gracefully"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        mock_game.state.current_round = 1
+        mock_game.state.participants = {1: []}
+        mock_game.state.declare_winner = Mock()
+        mock_game.current_phase = Phase.NIGHT
+
+        round_end.run()
+
+        mock_game.state.declare_winner.assert_not_called()
+        assert mock_game.log_event.called
+
+
+class TestWinConditionLogic:
+    """Test suite for win condition checking logic."""
+
+    def test_is_werewolf_alive_when_present(self, mock_game, sample_participants):
+        """Test that is_werewolf_alive returns True when werewolf is in participants"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        mock_game.state.werewolf = sample_participants["werewolf"]
+        participants = [
+            sample_participants["werewolf"],
+            sample_participants["seer"],
+            sample_participants["villager1"]
+        ]
+
+        result = round_end.is_werewolf_alive(participants)
+
+        assert result is True
+
+    def test_is_werewolf_alive_when_eliminated(self, mock_game, sample_participants):
+        """Test that is_werewolf_alive returns False when werewolf is not in participants"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        mock_game.state.werewolf = sample_participants["werewolf"]
+        participants = [
             sample_participants["seer"],
             sample_participants["villager1"],
             sample_participants["villager2"]
         ]
 
-        mock_game.state.current_round = 1
-        mock_game.state.participants = {1: villagers_only}
-        mock_game.state.werewolf = sample_participants["werewolf"]  # werewolf exists but not in participants
-        mock_game.state.declare_winner = Mock()
-        mock_game.current_phase = None
+        result = round_end.is_werewolf_alive(participants)
 
-        # Execute
-        round_end.check_win_conditions()
+        assert result is False
 
-        # Verify villagers won
-        mock_game.state.declare_winner.assert_called_once_with("villagers")
-        assert mock_game.current_phase == Phase.GAME_END
-
-    @pytest.mark.asyncio
-    async def test_round_end_werewolves_win_when_equal_numbers(self, mock_game, mock_messenger, sample_participants):
-        """Test that werewolves win when they equal or outnumber villagers."""
-        round_end = RoundEnd(mock_game, mock_messenger)
-
-        # Setup: 1 werewolf, 1 villager (werewolf wins)
-        remaining = [
-            sample_participants["werewolf"],
-            sample_participants["villager1"]
-        ]
-
-        mock_game.state.current_round = 1
-        mock_game.state.participants = {1: remaining}
-        mock_game.state.werewolf = sample_participants["werewolf"]
-        mock_game.state.declare_winner = Mock()
-        mock_game.current_phase = None
-
-        # Execute
-        round_end.check_win_conditions()
-
-        # Verify werewolves won
-        mock_game.state.declare_winner.assert_called_once_with("werewolves")
-        assert mock_game.current_phase == Phase.GAME_END
-
-    @pytest.mark.asyncio
-    async def test_round_end_continues_game_when_no_win(self, mock_game, mock_messenger, sample_participants):
-        """Test that game continues when no win condition is met."""
-        round_end = RoundEnd(mock_game, mock_messenger)
-
-        # Setup: werewolf alive, villagers outnumber
-        mock_game.state.current_round = 1
-        mock_game.state.participants = {1: list(sample_participants.values())}
-        mock_game.state.werewolf = sample_participants["werewolf"]
-        mock_game.state.declare_winner = Mock()
-        mock_game.state.initialize_next_round = Mock()
-        mock_game.current_phase = None
-
-        # Execute
-        round_end.check_win_conditions()
-
-        # Verify game continues
-        mock_game.state.declare_winner.assert_not_called()
-        mock_game.state.initialize_next_round.assert_called_once()
-        assert mock_game.current_phase == Phase.NIGHT
-        assert mock_game.state.current_round == 2
-
-    def test_is_werewolf_alive(self, mock_game, mock_messenger, sample_participants):
-        """Test werewolf alive check."""
-        round_end = RoundEnd(mock_game, mock_messenger)
-        mock_game.state.werewolf = sample_participants["werewolf"]
-
-        # Werewolf in participants
-        participants_with_werewolf = list(sample_participants.values())
-        assert round_end.is_werewolf_alive(participants_with_werewolf) is True
-
-        # Werewolf not in participants
-        participants_without_werewolf = [
+    def test_is_werewolf_alive_when_no_werewolf(self, mock_game, sample_participants):
+        """Test that is_werewolf_alive returns False when game has no werewolf"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        mock_game.state.werewolf = None
+        participants = [
             sample_participants["seer"],
             sample_participants["villager1"]
         ]
-        assert round_end.is_werewolf_alive(participants_without_werewolf) is False
 
-    def test_count_werewolves(self, mock_game, mock_messenger, sample_participants):
-        """Test counting werewolves."""
-        round_end = RoundEnd(mock_game, mock_messenger)
+        result = round_end.is_werewolf_alive(participants)
 
-        participants = list(sample_participants.values())
-        assert round_end.count_werewolves(participants) == 1
+        assert result is False
 
-    def test_count_villagers(self, mock_game, mock_messenger, sample_participants):
-        """Test counting villagers (including seer)."""
-        round_end = RoundEnd(mock_game, mock_messenger)
+    def test_count_villagers(self, mock_game, sample_participants):
+        """Test counting active villagers (including thr seer)"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        participants = [
+            sample_participants["seer"],
+            sample_participants["villager1"],
+            sample_participants["villager2"],
+            sample_participants["werewolf"]
+        ]
 
-        participants = list(sample_participants.values())
-        # 3 villagers + 1 seer = 4
-        assert round_end.count_villagers(participants) == 4
+        result = round_end.count_villagers(participants)
 
-    @pytest.mark.asyncio
-    async def test_round_end_with_no_participants(self, mock_game, mock_messenger):
-        """Test that round end handles empty participants gracefully."""
-        round_end = RoundEnd(mock_game, mock_messenger)
+        assert result == 3
 
+    def test_count_villagers_only_seer(self, mock_game, sample_participants):
+        """Test counting villagers when only seer remains"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        participants = [
+            sample_participants["seer"],
+            sample_participants["werewolf"]
+        ]
+
+        result = round_end.count_villagers(participants)
+
+        assert result == 1
+
+    def test_count_villagers_empty(self, mock_game):
+        """Test counting villagers when list is empty"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        participants = []
+
+        result = round_end.count_villagers(participants)
+
+        assert result == 0
+
+    def test_check_werewolf_eliminated(self, mock_game, sample_participants):
+        """Test checking if werewolf has been eliminated"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
         mock_game.state.current_round = 1
-        mock_game.state.participants = {1: []}
-        mock_game.state.werewolf = None
+        mock_game.state.werewolf = sample_participants["werewolf"]
+        mock_game.state.participants = {
+            1: [
+                sample_participants["seer"],
+                sample_participants["villager1"]
+            ]
+        }
         mock_game.state.declare_winner = Mock()
+        mock_game.current_phase = Phase.NIGHT
 
-        # Execute - should not raise errors
         round_end.check_win_conditions()
 
-        # No winner should be declared with no participants
-        mock_game.state.declare_winner.assert_not_called()
+        mock_game.state.declare_winner.assert_called_once_with("villagers")
+        assert mock_game.current_phase == Phase.GAME_END
+
+    def test_check_werewolf_majority(self, mock_game, sample_participants):
+        """Test checking if werewolf equals or outnumbers villagers"""
+        round_end = RoundEnd(mock_game, mock_game.messenger)
+        
+        mock_game.state.current_round = 1
+        mock_game.state.werewolf = sample_participants["werewolf"]
+        mock_game.state.participants = {
+            1: [
+                sample_participants["werewolf"],
+                sample_participants["seer"]
+            ]
+        }
+        mock_game.state.declare_winner = Mock()
+        mock_game.current_phase = Phase.NIGHT
+
+        round_end.check_win_conditions()
+
+        mock_game.state.declare_winner.assert_called_once_with("werewolf")
+        assert mock_game.current_phase == Phase.GAME_END
