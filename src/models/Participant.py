@@ -71,11 +71,11 @@ class Participant(BaseModel):
         
     
     #Helpers
-    def get_llm_context_prompt(self):
+    def get_context_prompt(self):
         return f"""
             You are a participant in a game of werewolf.
-
-            Your role: {self.role}
+            Your player ID: {self.id}
+            Your role: {self.role.name}
         """
             
     # Prompts
@@ -87,10 +87,10 @@ class Participant(BaseModel):
         messages_w_ids = [f"{msg.sender_id} - {msg.content}" for msg in messages]
         participant_ids = [p.id for p in participants if p.id != self.id]
 
-        llm_context = self.get_llm_context_prompt() if self.use_llm else ""
+        context = self.get_context_prompt()
 
         return f"""
-            {llm_context}
+            {context}
 
             It's time to vote for a player to eliminate.
 
@@ -117,11 +117,11 @@ class Participant(BaseModel):
         participants = self.game_data.participants.get(current_round, [])
         participant_ids = [p.id for p in participants if p.id != self.id]
 
-        llm_context = self.get_llm_context_prompt() if self.use_llm else ""
+        context = self.get_context_prompt()
         participants_list = "\n".join([f"- {p}" for p in participant_ids])
 
         return f"""
-            {llm_context}
+            {context}
 
             ROUND {current_round}:
 
@@ -146,7 +146,7 @@ class Participant(BaseModel):
         participants = self.game_data.participants.get(current_round, [])
         previous_checks = self.game_data.seer_checks
 
-        llm_context = self.get_llm_context_prompt() if self.use_llm else ""
+        context = self.get_context_prompt()
 
         previous_checked_names = [name for name, _ in previous_checks]
         remaining = [p.id for p in participants if p.id not in previous_checked_names and p.id != self.id]
@@ -154,7 +154,7 @@ class Participant(BaseModel):
         checked_list = "\n".join([f"- {name} is werewolf: {result}" for name, result in previous_checks])
 
         return f"""
-            {llm_context}
+            {context}
 
             ROUND {current_round}:
 
@@ -181,10 +181,10 @@ class Participant(BaseModel):
         """
 
     def get_seer_reveal_prompt(self, player_id: str, is_werewolf: bool) -> str:
-        llm_context = self.get_llm_context_prompt() if self.use_llm else ""
+        context = self.get_context_prompt()
 
         return f"""
-            {llm_context}
+            {context}
 
             Here are the results of your investigation:
 
@@ -196,11 +196,11 @@ class Participant(BaseModel):
         current_round = self.game_data.current_round
         bids = self.game_data.bids.get(current_round, [])
 
-        llm_context = self.get_llm_context_prompt() if self.use_llm else ""
+        context = self.get_context_prompt()
         bids_list = "\n".join([f"- Participant {bid.participant_id}: {bid.amount} points" for bid in bids])
 
         return f"""
-            {llm_context}
+            {context}
 
             It is time to place your bid for speaking order in the upcoming debate round.
             You are playing as a {self.role.name}.
@@ -228,14 +228,14 @@ class Participant(BaseModel):
         speaking_order = self.game_data.speaking_order.get(current_round, [])
         latest_kill = self.game_data.latest_werewolf_kill
 
-        llm_context = self.get_llm_context_prompt() if self.use_llm else ""
+        context = self.get_context_prompt()
         messages_str = "\n".join([f"{msg.sender_id}: {msg.content}" for msg in messages])
         order_str = ", ".join(speaking_order)
 
         night_info = f"Last night, {latest_kill} was eliminated by the werewolf." if latest_kill else ""
 
         return f"""
-            {llm_context}
+            {context}
 
             ROUND {current_round} - Debate Phase
 
