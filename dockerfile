@@ -14,7 +14,7 @@ RUN \
 # Ensure the working directory is on PYTHONPATH so `import src...` works
 ENV PYTHONPATH=/home/agent
 
-# Run the project's __main__.py (which starts uvicorn on port 9999)
+# Run the project's __main__.py (which starts uvicorn on port 9009)
 ENTRYPOINT ["uv", "run", "__main__.py"]
-CMD ["--host", "0.0.0.0", "--port", "9999"]
-EXPOSE 9999
+CMD ["--host", "0.0.0.0"]
+EXPOSE 9009
