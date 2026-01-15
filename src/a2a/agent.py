@@ -60,7 +60,7 @@ class GreenAgent:
             return
 
         # Get the participant's role and URL
-        participant_role = request.role
+        participant_role = request.config.get("role")
         participant_url = next(iter(request.participants.values()))
         
         await updater.update_status(
@@ -189,12 +189,12 @@ class GreenAgent:
         shuffled_participants = all_participants.copy()
         random.shuffle(shuffled_participants)
         self.game.state.speaking_order[1] = [p.id for p in shuffled_participants]
-
+    
     def validate_request(self, request: EvalRequest) -> tuple[bool, str]:
-        if not request.participants:
-            return False, "No participant provided"
+      if not request.participants:
+          return False, "No participant provided"
 
-        if not request.role:
-            return False, "No participant role specified"
+      if not request.config.get("role"):
+          return False, "No participant role specified in config"
 
-        return True, "ok"
+      return True, "ok"
