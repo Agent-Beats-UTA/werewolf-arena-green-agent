@@ -73,10 +73,9 @@ class Participant(BaseModel):
     #Helpers
     def get_llm_context_prompt(self):
         return f"""
-            You are a participant in a game of werewolf. Here are your memories of the game so far:
+            You are a participant in a game of werewolf.
 
             Your role: {self.role}
-            Who you suspect and why: {self.llm_state.suspects}
         """
             
     # Prompts

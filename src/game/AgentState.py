@@ -8,7 +8,6 @@ if TYPE_CHECKING:
 
 class AgentState(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
-
     suspects: List[Suspect] = []
     game_data: Any = None  # GameData at runtime
         
