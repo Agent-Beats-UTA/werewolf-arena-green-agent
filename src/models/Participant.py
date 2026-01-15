@@ -104,6 +104,8 @@ class Participant(BaseModel):
                 "player_id": "the player ID you want to eliminate",
                 "reason": "your explanation for why you are eliminating this player"
             }}
+
+            IMPORTANT: You MUST respond with valid JSON only. Do not include any text, markdown, or explanation before or after the JSON object.
         """
 
     def get_werewolf_prompt(self) -> str:
@@ -131,6 +133,8 @@ class Participant(BaseModel):
                 "player_id": "the player ID you want to eliminate",
                 "reason": "your explanation for why you are eliminating this player"
             }}
+
+            IMPORTANT: You MUST respond with valid JSON only. Do not include any text, markdown, or explanation before or after the JSON object.
         """
 
     def get_seer_prompt(self) -> str:
@@ -168,6 +172,8 @@ class Participant(BaseModel):
                 "player_id": "the player ID you want to investigate",
                 "reason": "your explanation for why you are investigating this player"
             }}
+
+            IMPORTANT: You MUST respond with valid JSON only. Do not include any text, markdown, or explanation before or after the JSON object.
         """
 
     def get_seer_reveal_prompt(self, player_id: str, is_werewolf: bool) -> str:
@@ -208,6 +214,8 @@ class Participant(BaseModel):
                 "bid_amount": <your_bid_amount>,
                 "reason": "your explanation for your bid"
             }}
+
+            IMPORTANT: You MUST respond with valid JSON only. Do not include any text, markdown, or explanation before or after the JSON object.
         """
 
     def get_debate_prompt(self) -> str:
@@ -242,4 +250,6 @@ class Participant(BaseModel):
             {{
                 "message": "your message to the group"
             }}
+
+            IMPORTANT: You MUST respond with valid JSON only. Do not include any text, markdown, or explanation before or after the JSON object.
         """
