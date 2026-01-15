@@ -65,48 +65,25 @@ class GreenAgent:
         participant_url = str(next(iter(request.participants.values())))
         
         await updater.update_status(
-            TaskState.working, new_agent_text_message(f"Parsed participant {participant_url} with role: {participant_role} from request")
+            TaskState.working, new_agent_text_message(f"Starting game with participant {participant_url} as {participant_role}")
         )
 
         self.init_game(participant_url, participant_role)
+        self.game.updater = updater  # Set updater for logging from phases
+
         while game_over == False:
-            
-            #Night Phase
-            self.game.run_night_phase()
-            await updater.update_status(
-                TaskState.working, new_agent_text_message("Night phase ended, starting bidding")
-            )
-            
-            #Bidding phase
-            self.game.run_bidding_phase()
-            await updater.update_status(
-                TaskState.working, new_agent_text_message("Bidding phase ended, started discussion")
-            )
-            
-            #Debate phase
-            self.game.run_debate_phase()
-            await updater.update_status(
-                TaskState.working, new_agent_text_message("debate phase ended, starting voting")
-            )
-            
-            #Voting phase
-            self.game.run_voting_phase()
-            await updater.update_status(
-                TaskState.working, new_agent_text_message("Voting phase ended")
-            )
-            
-            #Round end
-            self.game.run_round_end_phase()
-            await updater.update_status(
-                TaskState.working, new_agent_text_message("Round end")
-            )
-            
+            await self.game.run_night_phase()
+            await self.game.run_bidding_phase()
+            await self.game.run_debate_phase()
+            await self.game.run_voting_phase()
+            await self.game.run_round_end_phase()
+
             # Check if game ends
             if self.game.current_phase == Phase.GAME_END:
                 game_over = True
                 await updater.update_status(
-                TaskState.working, new_agent_text_message("Game ended, compiling results and analytics")
-            )
+                    TaskState.working, new_agent_text_message("Game ended, compiling results and analytics")
+                )
             
         analytics = await self.game.run_game_end_phase()
 

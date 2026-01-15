@@ -14,6 +14,7 @@ class Bidding(Phase):
         super().__init__(game, messenger)
 
     async def run(self):
+        await self.game.log("[Bidding] Collecting bids...")
         await self.collect_round_bids()
         self.tally_bids_and_set_order()
 
@@ -24,23 +25,25 @@ class Bidding(Phase):
         current_participants = game_state.participants[current_round]
 
         for participant in current_participants:
+            await self.game.log(f"[Bidding] {participant.id[:8]} placing bid...")
             response = await participant.talk_to_agent(
                 prompt=participant.get_bid_prompt(),
             )
-            
+
             bid_amount = response["bid_amount"]
             reason = response["reason"]
-            
+            await self.game.log(f"[Bidding] {participant.id[:8]} bid {bid_amount}")
+
             player_bid = Bid(
                 participant_id=participant.id,
                 amount=bid_amount
             )
-            
+
             if current_round not in game_state.bids:
                 game_state.bids[current_round] = []
 
             game_state.bids[current_round].append(player_bid)
-            
+
             # Log Event
             bid_event = Event(
                 type=EventType.BID_PLACED,

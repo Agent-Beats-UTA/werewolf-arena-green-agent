@@ -1,11 +1,14 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from src.models.enum.EventType import EventType
 from src.models.enum.Phase import Phase
 from src.game.GameData import GameData
 from src.models.Event import Event
 from src.a2a.messenger import Messenger
+
+from a2a.types import TaskState
+from a2a.utils import new_agent_text_message
 
 from src.phases.night import Night
 from src.phases.bidding import Bidding
@@ -18,6 +21,7 @@ class Game(BaseModel):
     current_phase: Phase
     state: GameData
     messenger: Optional[Messenger] = None
+    updater: Optional[Any] = None  # TaskUpdater at runtime
     night_controller: Optional[Night] = None
     bidding_controller: Optional[Bidding] = None
     debate_controller: Optional[Debate] = None
@@ -49,9 +53,16 @@ class Game(BaseModel):
         for p in participants:
             self.state.add_participant(p, "")
        
-    #Logs     
+    #Logs
     def log_event(self, round:int, event:Event):
          self.state.events.setdefault(round, []).append(event)
+
+    async def log(self, message: str):
+        """Log a message via the updater if available"""
+        if self.updater:
+            await self.updater.update_status(
+                TaskState.working, new_agent_text_message(message)
+            )
          
     # Prompts
     def get_night_elimination_message(self, round_num:int):
@@ -68,20 +79,25 @@ class Game(BaseModel):
         
         
     # Execute Phases
-    def run_night_phase(self):
-        self.night_controller.run()
+    async def run_night_phase(self):
+        await self.log("Starting night phase...")
+        await self.night_controller.run()
 
-    def run_bidding_phase(self):
-        self.bidding_controller.run()
+    async def run_bidding_phase(self):
+        await self.log("Starting bidding phase...")
+        await self.bidding_controller.run()
 
-    def run_debate_phase(self):
-        self.debate_controller.run()
+    async def run_debate_phase(self):
+        await self.log("Starting debate phase...")
+        await self.debate_controller.run()
 
-    def run_voting_phase(self):
-        self.voting_controller.run()
+    async def run_voting_phase(self):
+        await self.log("Starting voting phase...")
+        await self.voting_controller.run()
 
-    def run_round_end_phase(self):
-        self.round_end_controller.run()
+    async def run_round_end_phase(self):
+        await self.log("Starting round end phase...")
+        await self.round_end_controller.run()
         
     async def run_game_end_phase(self):
         if self.game_end_controller:

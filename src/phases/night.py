@@ -14,6 +14,7 @@ class Night(Phase):
         super().__init__(game, messenger)
 
     async def run(self):
+        await self.game.log(f"[Night] Round {self.game.state.current_round}")
         await self.execute_werewolf_kill()
         await self.execute_seer_investigation()
 
@@ -24,14 +25,17 @@ class Night(Phase):
 
         # Check if werewolf is still alive
         if game_state.werewolf is None:
+            await self.game.log("[Night] Werewolf is dead, skipping kill")
             return
 
+        await self.game.log(f"[Night] Werewolf {game_state.werewolf.id[:8]} choosing victim...")
         response = await game_state.werewolf.talk_to_agent(
             prompt=game_state.werewolf.get_werewolf_prompt(),
         )
 
         player = response["player_id"]
         rationale = response["reason"]
+        await self.game.log(f"[Night] Werewolf eliminated {player[:8]}: {rationale[:50]}...")
 
         self.game.state.eliminate_player(player, EliminationType.NIGHT_KILL)
         werewolf_elimination_event = Event(
@@ -48,8 +52,10 @@ class Night(Phase):
 
         # Check if seer is still alive
         if seer is None:
+            await self.game.log("[Night] Seer is dead, skipping investigation")
             return
 
+        await self.game.log(f"[Night] Seer {seer.id[:8]} choosing target...")
         response = await seer.talk_to_agent(
             prompt=seer.get_seer_prompt(),
         )
@@ -66,7 +72,8 @@ class Night(Phase):
         self.game.log_event(game_state.current_round, seer_investigation_event)
 
         # Reveal investigation result to seer
-        is_werewolf = game_state.werewolf.id == player
+        is_werewolf = game_state.werewolf.id == player if game_state.werewolf else False
+        await self.game.log(f"[Night] Seer investigated {player[:8]}: {'WEREWOLF' if is_werewolf else 'not werewolf'}")
         await seer.talk_to_agent(
             prompt=seer.get_seer_reveal_prompt(player_id=player, is_werewolf=is_werewolf),
         )

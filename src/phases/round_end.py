@@ -15,31 +15,36 @@ class RoundEnd(Phase):
         super().__init__(game, messenger)
         
     async def run(self):
-        self.check_win_conditions()
+        await self.check_win_conditions()
         self.log_event(EventType.ROUND_END)
         
-    #Check if the game is over 
-    def check_win_conditions(self):
+    #Check if the game is over
+    async def check_win_conditions(self):
         game_state = self.game.state
         current_round = game_state.current_round
         current_participants = game_state.participants.get(current_round, [])
-        
+
         if not current_participants:
             return
-        
+
         werewolf_alive = self.is_werewolf_alive(current_participants)
         villager_count = self.count_villagers(current_participants)
-        
+
+        await self.game.log(f"[RoundEnd] Round {current_round}: {len(current_participants)} alive, werewolf {'alive' if werewolf_alive else 'dead'}, {villager_count} villagers")
+
         #villagers win
         if not werewolf_alive:
+            await self.game.log("[RoundEnd] VILLAGERS WIN!")
             game_state.declare_winner("villagers")
             self.game.current_phase = PhaseEnum.GAME_END
 
         #werewolves win
         elif werewolf_alive and villager_count <= 1:
+            await self.game.log("[RoundEnd] WEREWOLVES WIN!")
             game_state.declare_winner("werewolves")
             self.game.current_phase = PhaseEnum.GAME_END
         else:
+            await self.game.log(f"[RoundEnd] Advancing to round {current_round + 1}")
             game_state.current_round += 1
             game_state.initialize_next_round()
             self.game.current_phase = PhaseEnum.NIGHT

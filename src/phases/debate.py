@@ -24,15 +24,19 @@ class Debate(PhaseBase):
         # Filter speaking order to only include current participants (exclude eliminated)
         active_speaking_order = [pid for pid in speaking_order if pid in participants_dict]
 
+        await self.game.log(f"[Debate] {len(active_speaking_order)} participants debating...")
+
         for _ in range(self.game.state.turns_to_speak_per_round):
             for participant_id in active_speaking_order:
                 participant = participants_dict[participant_id]
 
+                await self.game.log(f"[Debate] {participant_id[:8]} speaking...")
                 response = await participant.talk_to_agent(
                     prompt=participant.get_debate_prompt(),
                 )
 
                 message_content = response["message"]
+                await self.game.log(f"[Debate] {participant_id[:8]}: {message_content[:50]}...")
 
                 # Store response in chat history
                 message = Message(
