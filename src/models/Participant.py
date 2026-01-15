@@ -24,12 +24,17 @@ class Participant(BaseModel):
 
     #Messaging
     async def talk_to_agent(self, prompt: str):
+        if not prompt or not prompt.strip():
+            raise ValueError(f"[Participant {self.id[:8]}] Attempted to send empty prompt")
+
         if self.use_llm:
             response = self.llm.execute_prompt(prompt=prompt)
         else:
+            # Use new_conversation=True to avoid context continuation issues
             response = await self.messenger.talk_to_agent(
                 message=prompt,
-                url=self.url
+                url=self.url,
+                new_conversation=True
             )
 
         parsed = self.parse_json_response(response)

@@ -115,6 +115,12 @@ class Messenger:
         Returns:
             str: The agent's response message
         """
+        # Debug: log message being sent
+        print(f"[Messenger] Sending to {url}:")
+        print(f"[Messenger] Message length: {len(message)}")
+        print(f"[Messenger] Message preview: {message[:200]}...")
+        print(f"[Messenger] Context ID: {self._context_ids.get(url, None)}")
+
         outputs = await send_message(
             message=message,
             base_url=url,
