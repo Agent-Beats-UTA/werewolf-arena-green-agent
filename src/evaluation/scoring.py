@@ -23,7 +23,7 @@ class Scoring(BaseModel):
                 if vote.voted_for_id != werewolf_id:
                     score += 5
         
-        if self.game_state.winner == "werewolves":
+        if self.game_state.winner == "werewolf":
             score += 50
         
         return score

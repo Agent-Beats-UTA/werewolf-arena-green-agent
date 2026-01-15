@@ -85,10 +85,14 @@ def compute_game_analytics(state: GameData) -> Dict[str, Any]:
 
 
 def render_summary_text(analytics: Dict[str, Any]) -> str:
+    scores = analytics.get('scores', {})
+    scores_text = "\n".join([f"- {pid}: {score} points" for pid, score in scores.items()])
+    
     return (
         "Game complete.\n"
         f"- Winner: {analytics.get('winner', 'unknown')}\n"
         f"- Rounds played: {analytics.get('rounds_played', '?')}\n"
         f"- Werewolf kills: {analytics.get('werewolf_kills', 0)}\n"
         f"- Seer found werewolf: {analytics.get('seer_found_werewolf', False)}\n"
+        f"\nScores:\n{scores_text if scores_text else '- No scores calculated'}\n"
     )
