@@ -111,6 +111,9 @@ class GreenAgent:
         self.init_game(participant_url, participant_role)
         self.game.updater = updater
 
+        # Store participant ID before game starts (they may be eliminated during the game)
+        participant_id = self.get_participant_id_by_url(participant_url)
+
         game_over = False
         while game_over == False:
             await self.game.run_night_phase()
@@ -125,21 +128,23 @@ class GreenAgent:
         analytics = await self.game.run_game_end_phase()
 
         # Add participant-specific info to analytics
-        participant = self.get_participant_by_url(participant_url)
-        if participant:
-            analytics["participant_id"] = participant.id
+        if participant_id:
+            analytics["participant_id"] = participant_id
             analytics["participant_role"] = participant_role.name
-            analytics["participant_score"] = analytics.get("scores", {}).get(participant.id, 0)
-            analytics["participant_survived"] = participant.is_alive
+            analytics["participant_score"] = analytics.get("scores", {}).get(participant_id, 0)
+            # Check if participant survived by seeing if they're still in the final round's participants
+            final_round = self.game.state.current_round
+            final_participants = self.game.state.participants.get(final_round, [])
+            analytics["participant_survived"] = any(p.id == participant_id for p in final_participants)
 
         return analytics
 
-    def get_participant_by_url(self, url: str):
-        """Find the participant with the given URL."""
-        for round_participants in self.game.state.participants.values():
-            for p in round_participants:
-                if hasattr(p, 'url') and p.url == url:
-                    return p
+    def get_participant_id_by_url(self, url: str) -> str | None:
+        """Find the participant ID for the given URL from round 1."""
+        round_1_participants = self.game.state.participants.get(1, [])
+        for p in round_1_participants:
+            if hasattr(p, 'url') and p.url == url:
+                return p.id
         return None
 
     def compute_aggregate_analytics(self, all_results: Dict[Role, List[Dict[str, Any]]], participant_url: str) -> Dict[str, Any]:
