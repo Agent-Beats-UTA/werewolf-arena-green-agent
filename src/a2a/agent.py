@@ -20,7 +20,7 @@ from src.models.enum.Role import Role
 from src.services.llm import LLM
 
 # Number of games to play per role
-GAMES_PER_ROLE = 5
+GAMES_PER_ROLE = 2
 ROLES_TO_EVALUATE = [Role.VILLAGER, Role.WEREWOLF, Role.SEER]
 
 class GreenAgent:
